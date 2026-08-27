@@ -12,7 +12,7 @@ Prebuilt binaries will be attached to GitHub releases. To build from source:
 cargo install --path .
 ```
 
-Linux 5.13+ with Landlock is the enforced platform in v0.1. On unsupported kernels and non-Linux platforms, `awb` fails closed unless `--allow-unsafe-fallback` is explicitly passed; that mode observes writes but cannot block them.
+Linux 6.2+ with Landlock ABI 3 or newer is the enforced platform in v0.1. On unsupported kernels and non-Linux platforms, `awb` fails closed unless `--allow-unsafe-fallback` is explicitly passed; that mode observes writes but cannot block them.
 
 ## Usage
 

@@ -1,0 +1,29 @@
+[package]
+name = "agent-write-barrier"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Run local coding agents behind an explicit filesystem write boundary"
+license = "MIT"
+repository = "https://github.com/B-Divyesh/sf-agent-write-barrier"
+homepage = "https://agent-write-barrier.sociobot.in"
+readme = "README.md"
+keywords = ["cli", "sandbox", "landlock", "agent", "security"]
+categories = ["command-line-utilities", "development-tools"]
+exclude = ["site/", "tests/fixtures/", ".factory/", ".github/"]
+
+[[bin]]
+name = "awb"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5.46", features = ["derive"] }
+hex = "0.4.3"
+libc = "0.2.175"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+sha2 = "0.10.9"
+walkdir = "2.5.0"
+
+[dev-dependencies]
+tempfile = "3.21.0"
