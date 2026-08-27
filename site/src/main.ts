@@ -7,7 +7,7 @@ const scenarios: Record<Scenario, { command: string; status: string; rows: strin
   escape: {
     command: 'agent → write ~/.ssh/agent.conf',
     status: 'BLOCKED · operation not permitted',
-    rows: ['⊘  outside policy   /home/dev/.ssh/agent.conf', '✓  persistent changes   0', '✓  worktree unchanged']
+    rows: ['×  child syscall   permission denied', '✓  persistent changes   0', '✓  worktree unchanged']
   },
   ignored: {
     command: 'agent → create target/cache.pyc',

@@ -34,7 +34,7 @@ awb run -- claude
 }
 ```
 
-Paths are resolved relative to the policy file. `allow_write` is the complete persistent write surface. `watch` is snapshotted before and after the command; it should contain every allowed path and may include adjacent paths for audit coverage. Home and credential directories are never added implicitly. A private temporary directory is created for the child, exposed through `TMPDIR`, and removed after the run.
+Paths are resolved relative to the policy file. `allow_write` is the complete persistent write surface. `watch` is snapshotted before and after the command; it should contain every allowed path and may include adjacent paths for audit coverage. Home and credential directories are never added implicitly; policies that allow the filesystem root or an entire home directory are rejected. A private temporary directory is created for the child, exposed through `TMPDIR`, and removed after the run.
 
 Run any non-interactive or interactive coding agent after `--`:
 

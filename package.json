@@ -7,7 +7,7 @@
     "dev": "vite --config site/vite.config.ts",
     "preview": "vite preview --config site/vite.config.ts",
     "build": "npm run build:site && npm run build:cli",
-    "build:site": "vite build --config site/vite.config.ts",
+    "build:site": "vite build --config site/vite.config.ts && node scripts/build-sw.mjs",
     "build:cli": "cargo build --release && node scripts/copy-binary.mjs",
     "test": "npm run test:rust && npm run build:site && npm run test:site",
     "test:rust": "cargo test --all-targets",

@@ -81,6 +81,24 @@ impl Policy {
         let allow_write = resolve_paths(&self.allow_write, "allow_write")?;
         let watch = resolve_paths(&self.watch, "watch")?;
 
+        let home = std::env::var_os("HOME")
+            .or_else(|| std::env::var_os("USERPROFILE"))
+            .and_then(|value| PathBuf::from(value).canonicalize().ok());
+        for allowed in &allow_write {
+            if allowed.parent().is_none() {
+                return Err("refusing to allow writes to the filesystem root".into());
+            }
+            if home.as_ref().is_some_and(|value| value == allowed) {
+                return Err("refusing to allow writes to the entire home directory".into());
+            }
+            if !allowed.is_dir() {
+                return Err(format!(
+                    "allow_write path {} must be a directory",
+                    allowed.display()
+                ));
+            }
+        }
+
         for allowed in &allow_write {
             if !watch.iter().any(|root| allowed.starts_with(root)) {
                 return Err(format!(
@@ -142,4 +160,22 @@ pub fn read_json_file<T: for<'de> Deserialize<'de>>(path: &Path) -> Result<T, St
         .map_err(|error| format!("could not open {}: {error}", path.display()))?;
     serde_json::from_reader(io::BufReader::new(file))
         .map_err(|error| format!("invalid JSON in {}: {error}", path.display()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_a_filesystem_wide_write_policy() {
+        let temp = tempfile::tempdir().unwrap();
+        let source = temp.path().join("policy.json");
+        let policy = Policy {
+            version: POLICY_VERSION,
+            allow_write: vec![PathBuf::from("/")],
+            watch: vec![PathBuf::from("/")],
+        };
+        let error = policy.resolve(&source).unwrap_err();
+        assert!(error.contains("filesystem root"));
+    }
 }

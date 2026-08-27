@@ -41,6 +41,16 @@ test('390px layout has no horizontal overflow and critical targets remain usable
   expect(box?.height).toBeGreaterThanOrEqual(44);
 });
 
+test('installed shell explains offline state and remains readable', async ({ page, context }) => {
+  await page.goto('/');
+  await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+  await context.setOffline(true);
+  await expect(page.locator('#offline-bar')).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('See every write');
+  await context.setOffline(false);
+});
+
 for (const path of ['/privacy/', '/terms/']) {
   test(`${path} has one h1 and passes serious accessibility checks`, async ({ page }) => {
     await page.goto(path);
