@@ -1,0 +1,23 @@
+{
+  "name": "agent-write-barrier-site",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config site/vite.config.ts",
+    "preview": "vite preview --config site/vite.config.ts",
+    "build": "npm run build:site && npm run build:cli",
+    "build:site": "vite build --config site/vite.config.ts",
+    "build:cli": "cargo build --release && node scripts/copy-binary.mjs",
+    "test": "npm run test:rust && npm run build:site && npm run test:site",
+    "test:rust": "cargo test --all-targets",
+    "test:site": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
+    "@fontsource-variable/manrope": "5.2.7",
+    "@playwright/test": "1.58.2",
+    "typescript": "5.9.2",
+    "vite": "7.3.6"
+  }
+}

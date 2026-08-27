@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07110f" />
+    <meta name="description" content="Run local coding agents inside an explicit filesystem write boundary and review every persistent change." />
+    <title>Agent Write Barrier — See every write. Bound every agent.</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" as="image" href="/hero-boundary.webp" type="image/webp" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div class="offline-bar" id="offline-bar" role="status" hidden>You’re offline. The guide stays available; external install links may not.</div>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Agent Write Barrier home">
+        <svg aria-hidden="true" viewBox="0 0 32 32"><path d="M4 6v20h24V6H4Zm5 5h14v10H9V11Z"/><path class="brand-cut" d="M21 3h4v8h-4z"/></svg>
+        <span>AWB</span>
+        <span class="brand-long">Agent Write Barrier</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#how">How it works</a>
+        <a href="#install">Install</a>
+        <a class="nav-source" href="https://github.com/B-Divyesh/sf-agent-write-barrier">Source <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Local-first write enforcement</p>
+          <h1 id="hero-title">See every write.<br /><em>Bound every agent.</em></h1>
+          <p class="hero-lede">Let a coding agent edit and test your real worktree—without letting persistent files slip beyond the surface you’ll review.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#install">Install the barrier <span aria-hidden="true">↓</span></a>
+            <a class="button secondary" href="#demo">Try the receipt demo</a>
+          </div>
+          <dl class="proof-strip" aria-label="Product facts">
+            <div><dt>15/15</dt><dd>escape shapes blocked</dd></div>
+            <div><dt>0</dt><dd>network calls</dd></div>
+            <div><dt>1</dt><dd>local binary</dd></div>
+          </dl>
+        </div>
+        <figure class="hero-visual">
+          <div class="boundary-label label-in"><span aria-hidden="true">●</span> allowed worktree</div>
+          <div class="boundary-label label-out"><span aria-hidden="true">⊘</span> write blocked</div>
+          <img src="/hero-boundary.webp" width="1200" height="800" fetchpriority="high" alt="A translucent green worktree plane in a dark filesystem landscape, with amber write paths stopping at its glowing boundary." />
+          <figcaption>One bright review surface. Everything outside stays dark.</figcaption>
+        </figure>
+      </section>
+
+      <section class="problem-section" aria-labelledby="blind-title">
+        <p class="section-index">01 / THE BLIND SPOT</p>
+        <div class="section-heading">
+          <h2 id="blind-title">A clean diff is not a clean filesystem.</h2>
+          <p>Agents can leave executable caches, environments, hooks, and metadata that ordinary code review never shows. AWB makes the filesystem—not Git—the unit of review.</p>
+        </div>
+        <div class="diff-window" aria-label="Comparison between git diff and an AWB receipt">
+          <div class="window-bar"><span></span><span></span><span></span><code>review_surface</code></div>
+          <div class="compare-head"><span>git diff</span><span>awb receipt</span></div>
+          <div class="compare-row"><code>src/auth.ts</code><span class="git-sees">modified</span><span class="awb-sees">modified</span></div>
+          <div class="compare-row"><code>.venv/bin/activate</code><span class="git-misses">invisible</span><span class="awb-sees">created</span></div>
+          <div class="compare-row"><code>pkg/module.pyc</code><span class="git-misses">ignored</span><span class="awb-sees">created</span></div>
+          <div class="compare-row"><code>.git/hooks/post-checkout</code><span class="git-misses">invisible</span><span class="awb-sees">modified</span></div>
+        </div>
+      </section>
+
+      <section class="workflow" id="how" aria-labelledby="how-title">
+        <p class="section-index">02 / THE BOUNDARY</p>
+        <div class="section-heading">
+          <h2 id="how-title">Kernel block. Full-tree receipt.</h2>
+          <p>Two small mechanisms do one clear job. Landlock limits where the child can persist changes; content snapshots tell you exactly what changed inside.</p>
+        </div>
+        <ol class="steps">
+          <li><span class="step-num">01</span><div><h3>Declare</h3><p>Keep the open JSON policy beside your code. Nothing in your home or credentials is added implicitly.</p></div><code>"allow_write": ["."]</code></li>
+          <li><span class="step-num">02</span><div><h3>Run</h3><p>Put any local coding agent after <code>--</code>. Its terminal stays familiar; the write boundary is inherited.</p></div><code>awb run -- claude</code></li>
+          <li><span class="step-num">03</span><div><h3>Review</h3><p>Read one stable JSON receipt covering content, permissions, links, ignored files, and Git metadata.</p></div><code>awb inspect .awb/…</code></li>
+        </ol>
+      </section>
+
+      <section class="demo-section" id="demo" aria-labelledby="demo-title">
+        <div class="demo-copy">
+          <p class="section-index">03 / LIVE RECEIPT</p>
+          <h2 id="demo-title">Try a write at the edge.</h2>
+          <p>This local simulation shows how an enforced run is reported. It executes no shell commands and sends no data.</p>
+          <fieldset class="scenario-picker">
+            <legend>Choose a write scenario</legend>
+            <label><input type="radio" name="scenario" value="escape" checked /><span><strong>Outside worktree</strong><small>Write to ~/.ssh/agent.conf</small></span></label>
+            <label><input type="radio" name="scenario" value="ignored" /><span><strong>Ignored cache</strong><small>Create target/cache.pyc</small></span></label>
+            <label><input type="radio" name="scenario" value="metadata" /><span><strong>Git metadata</strong><small>Modify .git/hooks/pre-commit</small></span></label>
+            <label><input type="radio" name="scenario" value="unsupported" /><span><strong>Old kernel</strong><small>Enforcement is unavailable</small></span></label>
+          </fieldset>
+          <button class="button primary run-demo" type="button" id="run-demo">Run simulation <span aria-hidden="true">→</span></button>
+        </div>
+        <div class="terminal" aria-label="Simulated Agent Write Barrier terminal">
+          <div class="terminal-top"><span><i></i><i></i><i></i></span><code>awb · receipt</code><span class="terminal-mode">ENFORCED</span></div>
+          <div class="terminal-body" id="terminal-body">
+            <p class="prompt"><span>$</span> awb run -- agent</p>
+            <div class="demo-empty" id="demo-empty"><span class="empty-mark" aria-hidden="true">⌁</span><p>Choose a scenario, then run it.</p><small>The receipt will appear here.</small></div>
+            <div class="demo-result" id="demo-result" hidden></div>
+          </div>
+          <p class="sr-only" id="demo-status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="install-section" id="install" aria-labelledby="install-title">
+        <div>
+          <p class="section-index">04 / START LOCAL</p>
+          <h2 id="install-title">A boundary in three commands.</h2>
+          <p>Build from the open-source repository today. No daemon, account, telemetry, or global configuration.</p>
+          <div class="compat"><span class="status-dot" aria-hidden="true"></span><strong>Enforced:</strong> Linux 6.2+ / Landlock ABI 3+</div>
+        </div>
+        <div class="install-code">
+          <pre><code id="install-command">cargo install --git https://github.com/B-Divyesh/sf-agent-write-barrier</code></pre>
+          <button class="copy-button" type="button" data-copy="install-command">Copy install command</button>
+          <pre><code>cd your-project
+awb init
+awb check
+awb run -- claude</code></pre>
+          <a href="https://github.com/B-Divyesh/sf-agent-write-barrier#security-model-and-limits">Read the security model <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="limits" aria-labelledby="honest-title">
+        <p class="section-index">HONEST BY DESIGN</p>
+        <h2 id="honest-title">A write boundary, not a magic shield.</h2>
+        <ul>
+          <li><span aria-hidden="true">✓</span><div><strong>It does</strong><p>Block persistent filesystem writes outside policy on supported Linux, then hash watched trees before and after.</p></div></li>
+          <li><span aria-hidden="true">×</span><div><strong>It does not</strong><p>Isolate networks, processes, devices, kernel bugs, or hostile same-user processes. Pair with a VM when needed.</p></div></li>
+          <li><span aria-hidden="true">!</span><div><strong>Fallback is labeled</strong><p>Unsupported platforms fail closed. Explicit audit-only mode reports evidence but never pretends to enforce.</p></div></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <a class="brand footer-brand" href="/" aria-label="Agent Write Barrier home"><svg aria-hidden="true" viewBox="0 0 32 32"><path d="M4 6v20h24V6H4Zm5 5h14v10H9V11Z"/></svg><span>AWB</span></a>
+      <p>Open source. Local only. Built by <a href="https://sociobot.in">Sociobot</a>.</p>
+      <nav aria-label="Legal and project links"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-agent-write-barrier">GitHub</a></nav>
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
