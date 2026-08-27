@@ -1,0 +1,30 @@
+{
+  "slug": "agent-write-barrier",
+  "title": "Agent Write Barrier",
+  "territory": "devtools-data",
+  "user": "Developers running coding agents locally who need to let an agent edit a worktree while preventing persistent files outside the intended review surface.",
+  "evidence": [
+    {
+      "url": "https://hn.algolia.com/api/v1/items/47518179",
+      "date": "2026-03-25",
+      "quote_or_summary": "The post warns that agents with read/write project mounts can plant persistent executable artifacts such as .pyc, .venv, and .git files that a normal git diff misses."
+    },
+    {
+      "url": "https://github.com/anomalyco/opencode/issues/2242",
+      "date": "2025-08-25",
+      "quote_or_summary": "A 73-reaction, 90-comment request asks how to restrict an agent's terminal commands from accessing or editing outside the current directory."
+    }
+  ],
+  "recurrence": "The risk is independently raised as a security analysis and as a high-engagement feature request; a missed artifact can survive the agent session and run under the developer's account.",
+  "current_workaround": "Trust the agent, use a broad container mount, inspect git diff, or hand-configure OS sandboxing per tool.",
+  "incumbents_and_gap": "Docker, Seatbelt, and tool-specific approval modes provide isolation pieces; they do not focus on a portable before/after write manifest that catches untracked executable and metadata changes near a real worktree.",
+  "smallest_useful_product": "A CLI wrapper that launches an agent in a constrained directory, snapshots allowed and adjacent paths, blocks writes outside policy, and emits a reviewable write receipt including ignored/untracked files. Non-goals: autonomous code review, remote execution, or malware detection claims.",
+  "success_measure": "Against a test suite of 15 attempted escape writes, the wrapper blocks or reports all of them while allowing a normal repository edit/test workflow.",
+  "artifact_class": "cli",
+  "monetization": "free — an open policy format and local trust are essential; paid team policy distribution can follow only after adoption.",
+  "constraints": "Use OS-native sandbox primitives with clearly documented fallbacks; never promise a security boundary where the platform cannot enforce one; exclude user home and credentials by default.",
+  "est_build_effort": "M",
+  "why_distinct": "It makes the filesystem review boundary explicit; it is neither a coding agent nor a thin wrapper around one.",
+  "confidence": 5,
+  "state": "RESEARCHED"
+}
