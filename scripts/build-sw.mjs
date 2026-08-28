@@ -3,11 +3,16 @@ import { readFile, readdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join, relative, resolve } from 'node:path';
 
+// Azure Static Web Apps consumes this file during deployment and deliberately
+// does not expose it at runtime. Including it makes cache.addAll reject and
+// prevents the service worker from installing on the live host.
+const DEPLOYMENT_METADATA = new Set(['staticwebapp.config.json']);
+
 async function filesWithin(directory, root = directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
-    if (entry.name === 'sw.js') continue;
+    if (entry.name === 'sw.js' || DEPLOYMENT_METADATA.has(entry.name)) continue;
     const path = join(directory, entry.name);
     if (entry.isDirectory()) files.push(...await filesWithin(path, root));
     else {

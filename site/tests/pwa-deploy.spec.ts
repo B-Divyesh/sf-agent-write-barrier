@@ -11,7 +11,9 @@ test('a content-only release refreshes an existing controlled client', async ({ 
   const root = await mkdtemp(join(tmpdir(), 'awb-pwa-update-'));
   let version = 'v1';
   await writeFile(join(root, 'index.html'), `<!doctype html><title>${version}</title><h1>${version}</h1>`);
+  await writeFile(join(root, 'staticwebapp.config.json'), '{}');
   const first = await buildServiceWorker(root);
+  expect(first.assets).not.toContain('/staticwebapp.config.json');
 
   const server = createServer(async (request, response) => {
     const pathname = new URL(request.url ?? '/', 'http://127.0.0.1').pathname;

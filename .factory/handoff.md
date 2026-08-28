@@ -14,6 +14,12 @@ existing PWA client after a content-only release: the old worker always used
 the `awb-site-v1` cache and served navigations cache-first, so unchanged asset
 URLs meant `sw.js` did not change and the prior HTML could persist.
 
+Live verification of the first repair exposed a second installation failure:
+Azure Static Web Apps consumes `staticwebapp.config.json` at deploy time and
+returns it as 404 at runtime. The worker had included that deployment-only file
+in `cache.addAll()`, causing its install event to reject and leaving no active
+service worker.
+
 - `scripts/build-sw.mjs` now fingerprints every precached URL **and its
   content** into the worker cache name. A content-only HTML release changes
   `sw.js`, installs a new worker, and removes the old cache.
@@ -24,6 +30,8 @@ URLs meant `sw.js` did not change and the prior HTML could persist.
   cache rules: hashed assets and the immutable hero use one-year immutable
   caching; HTML revalidates; `sw.js` uses `no-cache`. It also applies the
   same-origin CSP and response hardening policy.
+- Deployment-only `staticwebapp.config.json` is excluded from the precache, so
+  Azure's intentional runtime 404 cannot prevent worker installation.
 
 ## Regression coverage
 
@@ -31,9 +39,11 @@ URLs meant `sw.js` did not change and the prior HTML could persist.
 install v1, alter only `index.html` to v2 while retaining the exact precache
 URL list, regenerate `sw.js`, call `registration.update()`, and assert that
 the existing controlled client renders v2. It additionally asserts the exact
-Azure cache and response-policy configuration. The regular offline browser
-test asserts that the site itself registers and controls the page before an
-offline reload; it does not manually install a worker.
+Azure cache and response-policy configuration, and writes a mock
+`staticwebapp.config.json` to assert that deployment-only metadata is not in
+the precache. The regular offline browser test asserts that the site itself
+registers and controls the page before an offline reload; it does not manually
+install a worker.
 
 ## Verification run (2026-08-28 UTC)
 
@@ -44,7 +54,7 @@ All commands below ran from this checkout after a fresh `npm ci` (23 packages;
 | --- | --- |
 | `npm test` | PASS — strict TypeScript check; 2 Rust unit tests; 4 CLI integrations, including the 15 attempted escape-write shapes; and 8 Playwright tests. Browser coverage includes desktop semantics/axe, keyboard activation and live status, 390×844 mobile overflow/target sizing, privacy and terms axe, offline reload, and existing-client PWA content-only update. |
 | `npm run lint` | PASS — `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings`. |
-| `npm run build` | PASS — produced `dist/site` and `dist/bin/awb`; the site precaches 17 files. |
+| `npm run build` | PASS — produced `dist/site` and `dist/bin/awb`; the site precaches 16 runtime files. |
 | `cargo package` | PASS — package verification passed; ready-to-publish archive is `target/package/agent-write-barrier-0.1.0.crate` (28,844 bytes). |
 | `cargo test --doc` | PASS — 0 doctests. |
 | Packaged consumer | PASS — unpacked the generated `.crate`, installed it into an isolated Cargo prefix, then completed `awb init`, `check --json`, `run --receipt … --json -- sh -c 'printf consumer > consumer.txt'`, and `inspect --json` in a fresh worktree. |
