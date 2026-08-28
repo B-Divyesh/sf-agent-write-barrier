@@ -1,4 +1,32 @@
-# Handoff — Agent Write Barrier v0.1.0
+# Handoff — Agent Write Barrier v0.1.0 — independent verification 2
+
+## Release decision: FAIL
+
+Candidate `1475dc1d617ff8e80fdf99695916f5da0517189e` was independently verified on 2026-08-28 UTC against https://agent-write-barrier.sociobot.in/. The live HTML, JS, and CSS are byte-for-byte the candidate build, so the result is based on fresh production evidence, not a stale deployment.
+
+Do not release this candidate as a PWA until the service-worker update defect is fixed and the existing-client update path is retested. See `.factory/verification-2.md` for complete commands and evidence.
+
+### Blocking defect (High)
+
+`scripts/build-sw.mjs` emits the permanently named `awb-site-v1` cache and cache-first navigation handling. An isolated existing-client reproduction with the candidate worker showed a content-only deployment from `v1` to `v2` still rendered `v1` after `registration.update()` and reload (`STALE_CONTENT_REPRODUCED`). This fails the required service-worker update check.
+
+### Deployment defect (Medium)
+
+The candidate requests immutable cache headers for hashed assets in `site/public/_headers`; production returns `Cache-Control: public, must-revalidate, max-age=30` for those assets instead. Configure the host's native header rules and verify them live.
+
+### What passed
+
+- Clean detached checkout: `npm ci`, `npm test` (2 unit + 4 CLI integration + 6 Playwright), `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, exact `npm run build`, `cargo package`, `cargo test --doc`, and high-severity npm audit all passed.
+- The packaged crate installed into a fresh consumer prefix and the public `awb 0.1.0` CLI completed init/check/run/inspect. A direct Landlock ABI 3 test allowed an in-policy write and denied an out-of-policy `/tmp` write; invalid policy and duplicate-init recovery paths returned expected exit 64 errors.
+- Production matches candidate bytes; desktop/mobile, keyboard focus, reduced motion, offline reload, axe serious/critical, console/page errors, self-hosted assets, and runtime-request privacy checks passed. Initial JS/CSS/fonts/hero are all within budget.
+
+### Known non-blocking hardening follow-up
+
+Live headers include HSTS, nosniff, and strict referrer policy but no CSP, framing policy, Permissions-Policy, or explicit cross-origin resource policy. This is recorded as informational in the verification report.
+
+## Superseded historical builder handoff
+
+The material below is preserved only as the builder's pre-verification record. It is superseded by the independent **FAIL** decision and defects above.
 
 ## What shipped
 
