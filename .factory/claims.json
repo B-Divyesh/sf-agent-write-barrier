@@ -1,0 +1,93 @@
+[
+  {
+    "id": "demo-isolation",
+    "claim": "The bundled demo runs in an isolated temporary directory and leaves the caller's project unchanged.",
+    "where": "homepage, demo, README",
+    "test": "npm run test:claims -- --grep @claim:demo-isolation",
+    "sandbox": "fresh caller directory; run awb demo and awb --demo; compare caller files and inspect the temporary receipt path"
+  },
+  {
+    "id": "write-boundary-15",
+    "claim": "The 15-case test blocks writes outside allowed paths under Landlock.",
+    "where": "homepage limits, README",
+    "test": "npm run test:claims -- --grep @claim:write-boundary-15",
+    "sandbox": "clean temporary allowed and outside directories; run all fifteen write shapes through the real debug binary"
+  },
+  {
+    "id": "receipt-coverage",
+    "claim": "Receipts list lasting content and metadata changes in watched paths, including ignored files, links, deletions, and Git metadata.",
+    "where": "homepage, demo, README, privacy",
+    "test": "npm run test:claims -- --grep @claim:receipt-coverage",
+    "sandbox": "run the bundled demo; parse its real JSON receipt and assert every stated change type and field"
+  },
+  {
+    "id": "policy-safety",
+    "claim": "Policy paths resolve from the policy file; AWB adds no home or credential paths and rejects root or full-home write access.",
+    "where": "README",
+    "test": "npm run test:claims -- --grep @claim:policy-safety",
+    "sandbox": "isolated home and two working directories; inspect init output and validate relative, root, and home policies"
+  },
+  {
+    "id": "process-contract",
+    "claim": "AWB preserves the child's working directory, streams, exit status, and outside reads while cleaning its private temporary directory.",
+    "where": "README",
+    "test": "npm run test:claims -- --grep @claim:process-contract",
+    "sandbox": "temporary project; nested child, outside read, stdout, stderr, exit 23, receipt JSON, and TMPDIR cleanup assertions"
+  },
+  {
+    "id": "enforcement-modes",
+    "claim": "AWB fails closed when enforcement is unavailable; explicit fallback is labeled audit-only and cannot block writes.",
+    "where": "homepage, README, terms",
+    "test": "npm run test:claims -- --grep @claim:enforcement-modes",
+    "sandbox": "debug-only unavailable-enforcement switch; assert child does not start, then assert explicit fallback write and receipt mode"
+  },
+  {
+    "id": "local-cli",
+    "claim": "AWB is one local CLI with no telemetry or network client in the package.",
+    "where": "homepage, README, privacy",
+    "test": "npm run test:claims -- --grep @claim:local-cli",
+    "sandbox": "inspect package manifest, dependencies, product source, and executable version output"
+  },
+  {
+    "id": "license-source",
+    "claim": "AWB is MIT-licensed source code with bundled sample files.",
+    "where": "homepage, README, terms",
+    "test": "npm run test:claims -- --grep @claim:license-source",
+    "sandbox": "inspect LICENSE, Cargo package metadata, repository URL, and sample source"
+  },
+  {
+    "id": "site-privacy",
+    "claim": "The site uses no analytics, cookies, trackers, or third-party runtime files.",
+    "where": "homepage, README, privacy",
+    "test": "npm run test:claims -- --grep @claim:site-privacy",
+    "sandbox": "fresh browser context; intercept every route request and inspect cookies and browser storage"
+  },
+  {
+    "id": "offline-guide",
+    "claim": "Cached public routes and the sample recording remain available offline, and the privacy control clears cached data.",
+    "where": "offline bar, homepage, privacy",
+    "test": "npm run test:claims -- --grep @claim:offline-guide",
+    "sandbox": "fresh service-worker context; prime all routes, go offline, reload each route, reconnect, and clear caches"
+  },
+  {
+    "id": "routing-metadata",
+    "claim": "Demo, legal, and missing-page routes have distinct titles, metadata, history, focus, and 404 handling.",
+    "where": "site routes",
+    "test": "npm run test:claims -- --grep @claim:routing-metadata",
+    "sandbox": "fresh browser context; navigate forward and back, inspect focus and metadata, and assert deploy 404 status configuration"
+  },
+  {
+    "id": "mobile-access",
+    "claim": "Every route has one main heading, no serious Axe issues at 390px, usable targets, and a keyboard-scrollable install command.",
+    "where": "site accessibility",
+    "test": "npm run test:claims -- --grep @claim:mobile-access",
+    "sandbox": "390 by 844 Chromium viewport across root, demo, legal, and 404 routes"
+  },
+  {
+    "id": "limits-consistent",
+    "claim": "The site, README, and CLI help consistently state that AWB is not a network, process, device, or kernel sandbox.",
+    "where": "homepage, README, terms, CLI help",
+    "test": "npm run test:claims -- --grep @claim:limits-consistent",
+    "sandbox": "scan public copy and real --help output for matching limits and overbroad receipt language"
+  }
+]

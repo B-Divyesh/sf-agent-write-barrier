@@ -40,6 +40,8 @@ Only state change moves. Hero traces reveal once over 700ms; demo receipt rows f
 ## Original asset plan and provenance
 
 - `site/public/hero-boundary.webp`: generated specifically for this product with the factory image deployment, then converted locally to WebP. Prompt: “Abstract editorial 3D data landscape for a developer security CLI: a single translucent sea-green glass worktree slab floating above a near-black moss filesystem grid, tiny amber data paths approach from outside and terminate cleanly at the glowing perimeter, a few pale code-like blocks safely inside, oblique isometric view, premium technical magazine art direction, physically plausible glass refraction, deep negative space, restrained palette of #07110f #77f2c3 #ffca72, no shield, no padlock, no people, no logos, no letters, no readable text, no watermark, wide 3:2 composition.” Deployment and generation settings are recorded in the adjacent `.json` provenance file. Factory-generated for this product; no third-party source asset.
+- `site/public/og-boundary.webp`: deterministic 1200 × 630 center crop of the original hero artwork. No new source material was introduced.
+- `site/public/apple-touch-icon.png`: deterministic square crop of the original hero artwork at 180 × 180. No new source material was introduced.
 - Interface icons and wordmark geometry are original inline SVG/CSS, built from boundary-line motifs. They are decorative where the adjacent label conveys meaning.
 
 The hero is explanatory but non-essential: its alt text describes the relationship, and the same boundary model is stated in adjacent HTML.

@@ -1,22 +1,38 @@
 # Agent Write Barrier
 
-Agent Write Barrier (`awb`) runs a local coding agent inside an explicit filesystem write policy, then emits a reviewable receipt of every created, changed, deleted, or metadata-modified path in the review surface—including ignored files, untracked files, and `.git` internals.
+Run a local coding agent under an explicit filesystem write policy. AWB records lasting changes in watched paths.
 
-It is for developers who want their agent to edit and test a real worktree without trusting `git diff` to reveal every persistent artifact. It is not a malware scanner, a code reviewer, or a portable container runtime.
+Receipts include ignored files, untracked files, links, and `.git` metadata. AWB is not a malware scanner or code reviewer.
+
+It is for developers who need more filesystem coverage than `git diff` provides.
+
+## Try the bundled sample
+
+```sh
+cargo run -- demo
+```
+
+The demo creates a unique temporary project and runs the real barrier. It blocks a realistic outside write and prints the receipt path.
+
+The sample files live in [`examples/sample-project`](examples/sample-project). The demo leaves the caller's project unchanged.
+
+The web recording is at <https://agent-write-barrier.sociobot.in/demo/>. Use **Reset demo** to restore its isolated sample state.
 
 ## Install
 
-Prebuilt binaries will be attached to GitHub releases. To build from source:
+Build from the MIT-licensed source repository:
 
 ```sh
-cargo install --path .
+cargo install --git https://github.com/B-Divyesh/sf-agent-write-barrier
 ```
 
-Linux 6.2+ with Landlock ABI 3 or newer is the enforced platform in v0.1. On unsupported kernels and non-Linux platforms, `awb` fails closed unless `--allow-unsafe-fallback` is explicitly passed; that mode observes writes but cannot block them.
+Landlock ABI 3 or newer provides enforced mode on Linux. Kernel version alone does not prove that Landlock is available.
 
-## Usage
+AWB fails closed when enforcement is unavailable. Pass `--allow-unsafe-fallback` explicitly to run in labeled audit-only mode.
 
-From the repository you want an agent to edit:
+## Run AWB
+
+From the project an agent should edit:
 
 ```sh
 awb init
@@ -34,58 +50,95 @@ awb run -- claude
 }
 ```
 
-Paths are resolved relative to the policy file. `allow_write` is the complete persistent write surface. `watch` is snapshotted before and after the command; it should contain every allowed path and may include adjacent paths for audit coverage. Home and credential directories are never added implicitly; policies that allow the filesystem root or an entire home directory are rejected. A private temporary directory is created for the child, exposed through `TMPDIR`, and removed after the run.
+### Terms used here
 
-Run any non-interactive or interactive coding agent after `--`:
+| Term | Meaning |
+| --- | --- |
+| allowed paths | Directories where the wrapped command may write |
+| watched paths | Directories compared before and after the command |
+| write boundary | The Landlock path rules applied to the child |
+| receipt | The JSON record of lasting changes in watched paths |
+
+Paths resolve from the policy file, even when AWB starts elsewhere. Every allowed path must sit inside a watched path.
+
+AWB adds no home or credential paths. It rejects policies allowing the filesystem root or the complete home directory.
+
+AWB creates a private temporary directory for the child. It sets `TMPDIR`, `TMP`, and `TEMP`, then removes that directory.
+
+Run a coding agent or another command after `--`:
 
 ```sh
 awb run --receipt .awb/last-run.json -- aider --model sonnet
 awb run --json -- sh -c 'printf "done\n" > result.txt'
 ```
 
-The command receives the working directory normally. On Linux, Landlock blocks persistent writes outside `allow_write` at the kernel boundary. After exit, `awb` prints a compact summary to stderr and writes a JSON receipt. The wrapped command's stdout/stderr remain untouched, and `awb` returns the wrapped command's exit code.
+The child receives its normal working directory. Nested child processes inherit the write boundary.
 
-Inspect an existing receipt:
+Reads outside allowed paths still work. Persistent writes outside those paths fail in enforced mode.
+
+AWB leaves the child's standard output and error streams intact. It returns the child's exit status.
+
+The normal summary goes to standard error. `run --json` also writes its JSON receipt to standard error.
+
+`check --json` and `inspect --json` write JSON to standard output. No command prompts when standard input is closed.
+
+Inspect a receipt:
 
 ```sh
 awb inspect .awb/last-run.json
 awb inspect --json .awb/last-run.json
 ```
 
-Machine-readable `--json` output is written to stderr for `run` (so the child owns stdout) and stdout for `check`/`inspect`. No command prompts in CI.
+Receipts record content hashes, metadata, link targets, the command, its exit code, and the mode used.
 
 ### Exit codes
 
 | Code | Meaning |
 | ---: | --- |
-| wrapped status | The command ran; its exit status is preserved |
-| `64` | Invalid arguments or policy |
-| `70` | Snapshot, receipt, or process failure |
-| `77` | Enforcement unavailable and unsafe fallback not authorized |
+| wrapped status | The command ran and its status was preserved |
+| `64` | Arguments or policy were invalid |
+| `70` | A snapshot, receipt, or process operation failed |
+| `77` | Enforcement was unavailable and fallback was not allowed |
 
-### Security model and limits
+## Security model and limits
 
-On supported Linux kernels, `awb` uses unprivileged Landlock rules inherited by the child. It restricts filesystem write operations by path hierarchy without restricting reads. The wrapper intentionally does not mount `$HOME`, add credential exceptions, interpret shell syntax, or claim to isolate networks, processes, devices, already-open file descriptors, kernel bugs, or hostile same-user processes. Use a VM/container as well when the agent itself is untrusted code.
+On supported Linux systems, unprivileged Landlock rules restrict writes by path hierarchy. The rules are inherited by child processes.
 
-Audit fallback is evidence, not enforcement. It detects before/after state changes only in `watch` and cannot prevent, attribute, or guarantee observation of transient writes. The receipt records which mode actually ran.
+AWB does not mount `$HOME`, add credential exceptions, or interpret shell syntax.
 
-## Development
+AWB does not isolate networks, processes, devices, open file descriptors, kernel flaws, or hostile same-user processes.
 
-Requirements: Rust 1.85+, Node.js 22+ for the docs site.
+Use a VM or container when the command itself is untrusted code.
+
+Audit-only mode is evidence, not enforcement. It observes watched paths but cannot block writes.
+
+Receipts compare before and after states in watched paths. They cannot attribute changes or guarantee observation of transient writes.
+
+## Develop and verify
+
+Requirements are Rust 1.85 or newer and Node.js 22 or newer.
 
 ```sh
-npm install
+npm ci
 npm test
-npm run build        # CLI plus site -> dist/bin and dist/site
-npm run dev          # docs site
-cargo package        # ready-to-publish crate archive; do not publish here
+npm run lint
+npm run build
+cargo package
 ```
 
-`npm test` covers the documented CLI flows, a 15-case write-escape suite on Linux, receipt behavior, policy validation, and browser accessibility/interaction smoke tests. The static documentation site is deployed from `dist/site`.
+`npm test` runs type checks, Rust tests, claim tests, browser tests, and accessibility checks. The build writes the site to `dist/site`.
+
+The release binary is written to `dist/bin/awb`. Registry publishing is handled outside this repository.
 
 ## Privacy
 
-`awb` is local-only, has no telemetry, and makes no network requests. Receipts contain local paths and file hashes, so review them before sharing. The documentation site uses no analytics, cookies, or third-party runtime resources.
+AWB is one local CLI. Its package contains no telemetry or network client.
+
+Receipts remain at the path you choose. Review them before sharing because local paths can reveal names.
+
+The documentation site uses no analytics, cookies, trackers, or third-party runtime files. Its service worker caches public routes for offline reading.
+
+See the [privacy page](https://agent-write-barrier.sociobot.in/privacy/) for browser storage controls.
 
 ## License
 

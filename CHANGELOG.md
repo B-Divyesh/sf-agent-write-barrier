@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — polish 1
+
+- Added the isolated `awb demo` command and bundled sample project.
+- Added the one-click web demo, real routes, metadata, 404 handling, and shared page shell.
+- Added a claim registry with CLI, browser, accessibility, privacy, and offline tests.
+- Rewrote first-screen, README, legal, and limits copy in plain language.
+
 All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project uses semantic versioning.
 
 ## [Unreleased]

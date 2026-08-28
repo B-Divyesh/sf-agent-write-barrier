@@ -1,0 +1,9 @@
+$ awb demo
+AWB demo — bundled sample in an isolated temporary directory
+Agent task: update a timeout and remove an obsolete file.
+BLOCKED: ../blocked-agent.conf stayed outside allowed paths
+RECORDED: source, ignored cache, deletion, link, and Git metadata
+awb: ENFORCED · exit 0 · 7 persistent changes
+Demo complete. Nothing was written to your current project.
+Sample directory: /tmp/agent-write-barrier-demo-…/sample-project
+Receipt: /tmp/agent-write-barrier-demo-…/write-receipt.json

@@ -1,63 +1,28 @@
 import { test, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
 
-test('homepage has a complete semantic shell and no serious accessibility issues', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
-  });
-  await page.goto('/');
-  await expect(page).toHaveTitle(/Agent Write Barrier/);
-  await expect(page.locator('main')).toHaveCount(1);
-  await expect(page.locator('h1')).toHaveCount(1);
-  await expect(page.locator('img[alt]')).toHaveCount(1);
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.filter((issue) => ['serious', 'critical'].includes(issue.impact ?? ''))).toEqual([]);
-  expect(errors).toEqual([]);
-});
-
-test('receipt demo exposes loading and final state to keyboard and assistive technology', async ({ page }) => {
-  await page.goto('/#demo');
-  const button = page.getByRole('button', { name: /Run simulation/ });
-  await button.focus();
-  await page.keyboard.press('Enter');
-  await expect(page.getByText('Checking policy and snapshot…')).toBeVisible();
-  await expect(page.locator('.result-status')).toHaveText('BLOCKED · operation not permitted');
-  await expect(page.locator('#demo-status')).toHaveText('BLOCKED · operation not permitted');
-
-  await page.getByText('Old kernel', { exact: true }).click();
-  await button.click();
-  await expect(page.locator('.result-status')).toHaveText('REFUSED · enforcement unavailable');
-  await expect(page.locator('.terminal-mode')).toHaveText('FAILED CLOSED');
-});
-
-test('390px layout has no horizontal overflow and critical targets remain usable', async ({ page }) => {
+test('first screen states the job, audience, and sample action', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(overflow).toBeLessThanOrEqual(1);
-  const install = page.getByRole('link', { name: /Install the barrier/ });
-  const box = await install.boundingBox();
-  expect(box?.height).toBeGreaterThanOrEqual(44);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Block agent writes outside your project');
+  await expect(page.getByText(/For developers running local coding agents/)).toBeVisible();
+  await expect(page.getByRole('link', { name: /Try it with sample data/ })).toBeVisible();
+  await expect(page.getByText(/Opens a completed sample run/)).toBeVisible();
 });
 
-test('installed shell explains offline state and remains readable', async ({ page, context }) => {
+test('query demo entry opens the isolated sample with reset and exit controls', async ({ page }) => {
+  await page.goto('/?demo=1');
+  await expect(page).toHaveURL(/\/demo\/$/);
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+  await expect(page.getByText('BLOCKED  ../blocked-agent.conf')).toBeVisible();
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual(['demo:awb:session']);
+  await page.getByRole('button', { name: 'Reset demo', exact: true }).first().click();
+  await expect(page.locator('#demo-reset-status')).toContainText('Demo reset');
+  await expect(page.getByRole('link', { name: 'Start for real' }).first()).toHaveAttribute('href', '/#install');
+});
+
+test('reduced motion removes meaningful transition duration', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
-  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
-  await context.setOffline(true);
-  await expect(page.locator('#offline-bar')).toBeVisible();
-  await page.reload();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('See every write');
-  await context.setOffline(false);
+  const duration = await page.locator('.button').first().evaluate((element) => getComputedStyle(element).transitionDuration);
+  expect(Number.parseFloat(duration)).toBeLessThanOrEqual(0.001);
 });
-
-for (const path of ['/privacy/', '/terms/']) {
-  test(`${path} has one h1 and passes serious accessibility checks`, async ({ page }) => {
-    await page.goto(path);
-    await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('main')).toHaveCount(1);
-    const results = await new AxeBuilder({ page }).analyze();
-    expect(results.violations.filter((issue) => ['serious', 'critical'].includes(issue.impact ?? ''))).toEqual([]);
-  });
-}

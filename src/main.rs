@@ -24,7 +24,7 @@ const EXIT_UNAVAILABLE: u8 = 77;
     name = "awb",
     version,
     about = "Give a coding agent an explicit filesystem write boundary",
-    long_about = "Agent Write Barrier runs a command with writes restricted to policy roots, then records every persistent change in watched paths—including ignored, untracked, and .git files.",
+    long_about = "Agent Write Barrier runs a command with writes restricted to allowed paths, then records lasting changes in watched paths—including ignored, untracked, and .git files.",
     after_help = "Security model: Linux Landlock ABI 3+ enforces filesystem writes. Other systems fail closed unless --allow-unsafe-fallback is explicit. This does not isolate networks or processes."
 )]
 struct Cli {
@@ -34,6 +34,8 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Run the real barrier on bundled sample data in an isolated directory
+    Demo(DemoArgs),
     /// Create a minimal policy in the current directory
     Init(InitArgs),
     /// Validate a policy and report enforcement support
@@ -43,6 +45,9 @@ enum Commands {
     /// Read a saved write receipt
     Inspect(InspectArgs),
 }
+
+#[derive(Debug, Args)]
+struct DemoArgs {}
 
 #[derive(Debug, Args)]
 struct InitArgs {
@@ -104,8 +109,14 @@ struct CheckReport {
 }
 
 fn main() -> ExitCode {
-    let cli = Cli::parse();
+    // Keep `--demo` as a convenient alias for people arriving from the site.
+    let mut values = env::args_os().collect::<Vec<_>>();
+    if values.get(1).is_some_and(|value| value == "--demo") {
+        values[1] = OsString::from("demo");
+    }
+    let cli = Cli::parse_from(values);
     let result = match cli.command {
+        Commands::Demo(args) => demo(args),
         Commands::Init(args) => init(args),
         Commands::Check(args) => check(args),
         Commands::Run(args) => run(args),
@@ -118,6 +129,83 @@ fn main() -> ExitCode {
             ExitCode::from(code)
         }
     }
+}
+
+fn demo(_args: DemoArgs) -> Result<u8, (u8, String)> {
+    let started = unix_ms();
+    let demo_root = env::temp_dir().join(format!(
+        "agent-write-barrier-demo-{started}-{}",
+        std::process::id()
+    ));
+    let project = demo_root.join("sample-project");
+    fs::create_dir_all(project.join("src"))
+        .map_err(|error| software_error(format!("could not create demo source: {error}")))?;
+    fs::create_dir_all(project.join(".git/hooks"))
+        .map_err(|error| software_error(format!("could not create demo metadata: {error}")))?;
+    fs::write(
+        project.join("src/config.rs"),
+        "pub const API_TIMEOUT_SECONDS: u8 = 20;\n",
+    )
+    .map_err(|error| software_error(format!("could not write demo source: {error}")))?;
+    fs::write(project.join("obsolete.txt"), "remove after migration\n")
+        .map_err(|error| software_error(format!("could not write demo fixture: {error}")))?;
+    fs::write(project.join(".git/hooks/pre-commit"), "#!/bin/sh\nexit 0\n")
+        .map_err(|error| software_error(format!("could not write demo metadata: {error}")))?;
+    fs::write(demo_root.join("blocked-agent.conf"), "developer-owned\n")
+        .map_err(|error| software_error(format!("could not write demo boundary file: {error}")))?;
+    let policy_path = demo_root.join("demo-policy.json");
+    fs::write(
+        &policy_path,
+        "{\n  \"version\": 1,\n  \"allow_write\": [\"sample-project\"],\n  \"watch\": [\"sample-project\"]\n}\n",
+    )
+    .map_err(|error| software_error(format!("could not write demo policy: {error}")))?;
+    let receipt_path = demo_root.join("write-receipt.json");
+
+    println!("AWB demo — bundled sample in an isolated temporary directory");
+    println!("Agent task: update a timeout and remove an obsolete file.");
+    let script = r#"
+if printf 'agent-key' > ../blocked-agent.conf 2>/dev/null; then
+  printf 'UNEXPECTED: outside write succeeded\n'
+else
+  printf 'BLOCKED: ../blocked-agent.conf stayed outside allowed paths\n'
+fi
+mkdir -p target
+printf 'pub const API_TIMEOUT_SECONDS: u8 = 30;\n' > src/config.rs
+printf 'compiled sample\n' > target/config.pyc
+rm obsolete.txt
+chmod 755 .git/hooks/pre-commit
+ln -s src/config.rs current-config
+printf 'RECORDED: source, ignored cache, deletion, link, and Git metadata\n'
+"#;
+    let caller = env::current_dir()
+        .map_err(|error| software_error(format!("could not read current directory: {error}")))?;
+    env::set_current_dir(&project)
+        .map_err(|error| software_error(format!("could not enter demo project: {error}")))?;
+    let run_result = run(RunArgs {
+        policy: policy_path,
+        receipt: Some(receipt_path.clone()),
+        json: false,
+        allow_unsafe_fallback: false,
+        command: vec![
+            OsString::from("sh"),
+            OsString::from("-c"),
+            OsString::from(script),
+        ],
+    });
+    env::set_current_dir(&caller)
+        .map_err(|error| software_error(format!("could not restore current directory: {error}")))?;
+    let code = run_result?;
+    let boundary = fs::read_to_string(demo_root.join("blocked-agent.conf"))
+        .map_err(|error| software_error(format!("could not verify demo boundary: {error}")))?;
+    if boundary != "developer-owned\n" {
+        return Err(software_error(
+            "demo boundary verification failed; outside file changed".into(),
+        ));
+    }
+    println!("Demo complete. Nothing was written to your current project.");
+    println!("Sample directory: {}", project.display());
+    println!("Receipt: {}", receipt_path.display());
+    Ok(code)
 }
 
 fn init(args: InitArgs) -> Result<u8, (u8, String)> {
@@ -176,7 +264,16 @@ fn run(args: RunArgs) -> Result<u8, (u8, String)> {
     }
 
     let temp = create_session_temp(&session_id).map_err(software_error)?;
-    let prepared = match PreparedRules::new(&policy.allow_write, &temp) {
+    #[cfg(debug_assertions)]
+    let forced_unavailable = env::var_os("AWB_TEST_DISABLE_LANDLOCK").is_some();
+    #[cfg(not(debug_assertions))]
+    let forced_unavailable = false;
+    let prepared_result = if forced_unavailable {
+        Err("Landlock disabled by the test harness".into())
+    } else {
+        PreparedRules::new(&policy.allow_write, &temp)
+    };
+    let prepared = match prepared_result {
         Ok(rules) => Some(rules),
         Err(error) if args.allow_unsafe_fallback => {
             eprintln!("awb: warning: audit-only fallback; writes are not blocked ({error})");

@@ -1,97 +1,142 @@
 import '@fontsource-variable/manrope/wght.css';
 import './styles.css';
 
-type Scenario = 'escape' | 'ignored' | 'metadata' | 'unsupported';
+const DEMO_PREFIX = 'demo:awb:';
+const KNOWN_ROUTES = new Set(['/', '/demo/', '/privacy/', '/terms/', '/404.html']);
 
-const scenarios: Record<Scenario, { command: string; status: string; rows: string[]; mode?: string; error?: boolean }> = {
-  escape: {
-    command: 'agent → write ~/.ssh/agent.conf',
-    status: 'BLOCKED · operation not permitted',
-    rows: ['×  child syscall   permission denied', '✓  persistent changes   0', '✓  worktree unchanged']
-  },
-  ignored: {
-    command: 'agent → create target/cache.pyc',
-    status: 'ALLOWED · included in receipt',
-    rows: ['+  created   target/cache.pyc', '#  sha256   607de9…be42', '✓  ignored file reported']
-  },
-  metadata: {
-    command: 'agent → modify .git/hooks/pre-commit',
-    status: 'ALLOWED · included in receipt',
-    rows: ['~  modified  .git/hooks/pre-commit', '~  mode      100644 → 100755', '✓  Git metadata reported']
-  },
-  unsupported: {
-    command: 'awb → prepare Landlock rules',
-    status: 'REFUSED · enforcement unavailable',
-    rows: ['!  Landlock ABI 3+ required', '×  command was not started', '→  use a supported kernel or explicit audit mode'],
-    mode: 'FAILED CLOSED',
-    error: true
+function normalizedPath(pathname = window.location.pathname): string {
+  if (pathname === '/demo' || pathname === '/privacy' || pathname === '/terms') return `${pathname}/`;
+  return pathname;
+}
+
+function updateConnection(): void {
+  const bar = document.querySelector<HTMLElement>('#offline-bar');
+  if (bar) bar.hidden = navigator.onLine;
+}
+
+function clearDemoStorage(): void {
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith(DEMO_PREFIX)) localStorage.removeItem(key);
   }
-};
+}
 
-const runButton = document.querySelector<HTMLButtonElement>('#run-demo');
-const result = document.querySelector<HTMLDivElement>('#demo-result');
-const empty = document.querySelector<HTMLDivElement>('#demo-empty');
-const status = document.querySelector<HTMLParagraphElement>('#demo-status');
-const terminalMode = document.querySelector<HTMLElement>('.terminal-mode');
-
-runButton?.addEventListener('click', () => {
-  const choice = document.querySelector<HTMLInputElement>('input[name="scenario"]:checked');
-  const scenario = scenarios[(choice?.value ?? 'escape') as Scenario];
-  runButton.disabled = true;
-  runButton.firstChild!.textContent = 'Checking boundary ';
-  empty?.setAttribute('hidden', '');
-  if (result) {
-    result.hidden = false;
-    result.innerHTML = '<p class="checking">Checking policy and snapshot…</p>';
-  }
-  if (status) status.textContent = 'Checking the selected write against policy.';
-
-  window.setTimeout(() => {
-    if (terminalMode) {
-      terminalMode.textContent = scenario.mode ?? 'ENFORCED';
-      terminalMode.classList.toggle('mode-error', Boolean(scenario.error));
-    }
-    if (result) {
-      result.innerHTML = `
-        <p class="result-command"><span>›</span> ${scenario.command}</p>
-        <p class="result-status ${scenario.error ? 'is-error' : ''}">${scenario.status}</p>
-        <div class="receipt-lines">${scenario.rows.map((row) => `<code>${row}</code>`).join('')}</div>
-        <p class="receipt-path">receipt <span>.awb/receipts/01J6…9J.json</span></p>`;
-    }
-    if (status) status.textContent = scenario.status;
-    runButton.disabled = false;
-    runButton.firstChild!.textContent = 'Run simulation ';
-  }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 420);
-});
-
-document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => {
-  button.addEventListener('click', async () => {
-    const target = document.getElementById(button.dataset.copy ?? '');
-    if (!target) return;
-    try {
-      await navigator.clipboard.writeText(target.textContent ?? '');
-      const original = button.textContent;
-      button.textContent = 'Copied';
-      window.setTimeout(() => { button.textContent = original; }, 1600);
-    } catch {
-      button.textContent = 'Select command to copy';
-      const selection = window.getSelection();
-      const range = document.createRange();
-      range.selectNodeContents(target);
-      selection?.removeAllRanges();
-      selection?.addRange(range);
-    }
+function bindPageActions(): void {
+  document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => {
+    button.onclick = async () => {
+      const target = document.getElementById(button.dataset.copy ?? '');
+      if (!target) return;
+      try {
+        await navigator.clipboard.writeText(target.textContent ?? '');
+        const original = button.textContent;
+        button.textContent = 'Copied';
+        window.setTimeout(() => { button.textContent = original; }, 1600);
+      } catch {
+        button.textContent = 'Select the command';
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    };
   });
+
+  if (normalizedPath() === '/demo/') {
+    localStorage.setItem(`${DEMO_PREFIX}session`, 'bundled-sample');
+    const reset = () => {
+      clearDemoStorage();
+      localStorage.setItem(`${DEMO_PREFIX}session`, 'bundled-sample');
+      const status = document.querySelector<HTMLElement>('#demo-reset-status');
+      if (status) status.textContent = 'Demo reset. The original sample receipt is shown.';
+      document.querySelector<HTMLElement>('.recording')?.scrollTo({ top: 0, behavior: 'instant' });
+    };
+    document.querySelector<HTMLButtonElement>('#reset-demo')?.addEventListener('click', reset);
+    document.querySelector<HTMLButtonElement>('#reset-demo-main')?.addEventListener('click', reset);
+    for (const id of ['leave-demo', 'leave-demo-main']) {
+      document.getElementById(id)?.addEventListener('click', clearDemoStorage);
+    }
+  }
+
+  document.querySelector<HTMLButtonElement>('#clear-site-data')?.addEventListener('click', async () => {
+    clearDemoStorage();
+    if ('caches' in window) {
+      await Promise.all((await caches.keys()).map((key) => caches.delete(key)));
+    }
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+    const status = document.querySelector<HTMLElement>('#clear-status');
+    if (status) status.textContent = 'Demo and offline data cleared.';
+  });
+}
+
+function syncNavigation(path: string): void {
+  document.querySelectorAll<HTMLAnchorElement>('.site-header [aria-current="page"], footer [aria-current="page"]').forEach((link) => link.removeAttribute('aria-current'));
+  document.querySelectorAll<HTMLAnchorElement>('.site-header a, footer a').forEach((link) => {
+    if (new URL(link.href, window.location.href).pathname === path) link.setAttribute('aria-current', 'page');
+  });
+}
+
+function copyMetadata(source: Document): void {
+  document.title = source.title;
+  const selectors = ['meta[name="description"]', 'meta[name="robots"]', 'link[rel="canonical"]', 'meta[property^="og:"]', 'meta[name^="twitter:"]'];
+  for (const selector of selectors) {
+    document.head.querySelectorAll(selector).forEach((node) => node.remove());
+    source.head.querySelectorAll(selector).forEach((node) => document.head.append(node.cloneNode(true)));
+  }
+}
+
+async function renderRoute(path: string, focus = true): Promise<void> {
+  const target = KNOWN_ROUTES.has(path) ? path : '/404.html';
+  const response = await fetch(target, { headers: { 'X-AWB-Route': '1' } });
+  if (!response.ok && target !== '/404.html') throw new Error(`Route failed: ${response.status}`);
+  const parsed = new DOMParser().parseFromString(await response.text(), 'text/html');
+  const nextMain = parsed.querySelector<HTMLElement>('main');
+  const currentMain = document.querySelector<HTMLElement>('main');
+  if (!nextMain || !currentMain) return;
+  currentMain.replaceWith(nextMain);
+  copyMetadata(parsed);
+  syncNavigation(path);
+  bindPageActions();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  const heading = nextMain.querySelector<HTMLElement>('h1');
+  const status = document.querySelector<HTMLElement>('#route-status');
+  if (status) status.textContent = heading?.textContent ? `${heading.textContent} page loaded` : 'Page loaded';
+  if (focus) heading?.focus({ preventScroll: true });
+}
+
+document.addEventListener('click', (event) => {
+  if (!(event.target instanceof Element)) return;
+  const link = event.target.closest<HTMLAnchorElement>('a[data-route]');
+  if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  const url = new URL(link.href, window.location.href);
+  if (url.origin !== window.location.origin) return;
+  event.preventDefault();
+  history.pushState({ route: url.pathname }, '', url.pathname);
+  void renderRoute(normalizedPath(url.pathname));
 });
 
-const offlineBar = document.querySelector<HTMLElement>('#offline-bar');
-const updateConnection = () => {
-  if (offlineBar) offlineBar.hidden = navigator.onLine;
-};
+window.addEventListener('popstate', () => { void renderRoute(normalizedPath()); });
 window.addEventListener('online', updateConnection);
 window.addEventListener('offline', updateConnection);
-updateConnection();
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  void navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+async function start(): Promise<void> {
+  let path = normalizedPath();
+  if (new URLSearchParams(window.location.search).get('demo') === '1') {
+    path = '/demo/';
+    history.replaceState({ route: path }, '', path);
+    await renderRoute(path, false);
+  } else if (!KNOWN_ROUTES.has(path)) {
+    await renderRoute('/404.html', false);
+  }
+  syncNavigation(path);
+  bindPageActions();
+  updateConnection();
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    void navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+  }
 }
+
+void start();

@@ -69,6 +69,7 @@ test('Azure deploy configuration keeps hashed assets immutable and the worker re
   expect(config.globalHeaders['Content-Security-Policy']).toContain("default-src 'self'");
   expect(config.globalHeaders['Content-Security-Policy']).toContain("font-src 'self' data:");
   expect(config.globalHeaders['X-Frame-Options']).toBe('DENY');
+  expect(config.responseOverrides['404']).toEqual({ rewrite: '/404.html', statusCode: 404 });
   expect(config.routes).toEqual(expect.arrayContaining([
     expect.objectContaining({
       route: '/assets/*',
