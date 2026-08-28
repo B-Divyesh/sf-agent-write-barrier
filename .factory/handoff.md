@@ -1,11 +1,16 @@
-# Handoff — Agent Write Barrier v0.1.0 repair
+# Handoff — Agent Write Barrier v0.1.0
 
-## Release decision
+## Release decision: PASS
 
-The failed PWA release candidate has been repaired and deployed as the original
-static artifact at <https://agent-write-barrier.sociobot.in/>. The repair is
-based at `d21ae74edb5d8aaed603268601703b8c34fa9fea`; the deployed fix is
-`038c538` (`fix: install PWA worker on Azure Static Web Apps`).
+Independent verification of candidate `9b168821aad5f7b6ae8da87f221ea806c53276d9` **PASSed** on 2026-08-28 UTC. The live deployment at <https://agent-write-barrier.sociobot.in/> exactly matches the candidate build. Full evidence, commands, live SHA-256 comparisons, and defect assessment are in `.factory/verification-3.md`.
+
+No Critical, High, Medium, or Low defects were found. The known platform limit is intentional: enforced mode requires Linux Landlock ABI 3+; unsupported systems fail closed unless the user explicitly chooses labelled audit-only fallback.
+
+## Latest verification summary
+
+`npm ci`, `npm test` (8 Playwright tests plus Rust/type checks), `npm run lint`, `npm run build`, `cargo package`, `cargo test --doc`, and high-severity audit all passed. A clean installed package consumer verified normal writes, ignored files, Git metadata receipt coverage, an outside-policy write denial, successful recovery, JSON operations, and invalid-input exit 64 handling. Live browser checks passed on desktop and 390px mobile: keyboard activation/focus, reduced motion, zero serious/critical Axe findings, no errors, same-origin requests, service-worker control, and offline reload. Live headers enforce immutable hashed asset caching, revalidatable worker/HTML, CSP and related response hardening. Mobile Lighthouse: 99 performance / 100 accessibility / 100 best practices / 100 SEO.
+
+## Earlier PWA repair context
 
 ## Root cause and repair
 
