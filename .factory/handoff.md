@@ -20,7 +20,8 @@ This repair addresses both release blockers from independent verification report
   documents revalidate by default and `/sw.js` uses `no-cache`. This replaces
   the ineffective assumption that the host would apply the portable `_headers`
   file.
-- The same native configuration adds a self-only CSP plus explicit frame,
+- The same native configuration adds a CSP limited to same-origin resources
+  plus the locally bundled `data:` font subset, along with explicit frame,
   permissions, and cross-origin-resource policies. The site has no inline
   scripts, telemetry, third-party runtime requests, or remote fonts.
 - Added strict TypeScript checking and an `npm run lint` command for Rust

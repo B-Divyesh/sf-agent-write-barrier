@@ -65,6 +65,7 @@ test('Azure deploy configuration keeps hashed assets immutable and the worker re
   const config = JSON.parse(await readFile(join(siteRoot, 'public/staticwebapp.config.json'), 'utf8'));
   expect(config.globalHeaders['Cache-Control']).toBe('public, max-age=0, must-revalidate');
   expect(config.globalHeaders['Content-Security-Policy']).toContain("default-src 'self'");
+  expect(config.globalHeaders['Content-Security-Policy']).toContain("font-src 'self' data:");
   expect(config.globalHeaders['X-Frame-Options']).toBe('DENY');
   expect(config.routes).toEqual(expect.arrayContaining([
     expect.objectContaining({
