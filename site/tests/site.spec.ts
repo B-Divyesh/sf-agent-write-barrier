@@ -44,6 +44,7 @@ test('390px layout has no horizontal overflow and critical targets remain usable
 test('installed shell explains offline state and remains readable', async ({ page, context }) => {
   await page.goto('/');
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
   await context.setOffline(true);
   await expect(page.locator('#offline-bar')).toBeVisible();
   await page.reload();
