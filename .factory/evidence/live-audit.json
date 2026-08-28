@@ -1,0 +1,71 @@
+{
+  "audits": [
+    {
+      "path": "/",
+      "status": 200,
+      "title": "Agent Write Barrier — Block writes outside a project",
+      "h1": 1,
+      "main": 1,
+      "overflow": 0,
+      "serious": []
+    },
+    {
+      "path": "/demo/",
+      "status": 200,
+      "title": "Demo — Agent Write Barrier",
+      "h1": 1,
+      "main": 1,
+      "overflow": 0,
+      "serious": []
+    },
+    {
+      "path": "/privacy/",
+      "status": 200,
+      "title": "Privacy — Agent Write Barrier",
+      "h1": 1,
+      "main": 1,
+      "overflow": 0,
+      "serious": []
+    },
+    {
+      "path": "/terms/",
+      "status": 200,
+      "title": "Terms — Agent Write Barrier",
+      "h1": 1,
+      "main": 1,
+      "overflow": 0,
+      "serious": []
+    },
+    {
+      "path": "/definitely-missing-review-route",
+      "status": 404,
+      "title": "Page not found — Agent Write Barrier",
+      "h1": 1,
+      "main": 1,
+      "overflow": 0,
+      "serious": []
+    }
+  ],
+  "demo": {
+    "url": "https://agent-write-barrier.sociobot.in/demo/",
+    "banner": true,
+    "blocked": true,
+    "keys": [
+      "demo:awb:session"
+    ],
+    "reset": "Demo reset. The original sample receipt is shown."
+  },
+  "history": {
+    "afterClick": "https://agent-write-barrier.sociobot.in/demo/",
+    "focusedAfterClick": "Watch AWB block a sample outside write",
+    "afterBack": "https://agent-write-barrier.sociobot.in/",
+    "focusedAfterBack": "Block agent writes outside your project"
+  },
+  "offline": {
+    "heading": "Watch AWB block a sample outside write",
+    "bar": true
+  },
+  "errors": [],
+  "thirdParty": [],
+  "cookies": []
+}

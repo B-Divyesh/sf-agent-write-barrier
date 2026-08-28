@@ -1,0 +1,14 @@
+{
+  "url": "https://agent-write-barrier.sociobot.in/demo/",
+  "loadMs": 871,
+  "errors": [],
+  "a11y": {
+    "title": "Demo — Agent Write Barrier",
+    "lang": "en",
+    "h1": 1,
+    "main": true,
+    "imgsMissingAlt": 0,
+    "buttonsUnlabeled": 0,
+    "textLength": 1359
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "url": "https://agent-write-barrier.sociobot.in/",
+  "loadMs": 1026,
+  "errors": [],
+  "a11y": {
+    "title": "Agent Write Barrier — Block writes outside a project",
+    "lang": "en",
+    "h1": 1,
+    "main": true,
+    "imgsMissingAlt": 0,
+    "buttonsUnlabeled": 0,
+    "textLength": 2433
+  }
+}
