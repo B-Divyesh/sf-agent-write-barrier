@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07110f" />
+    <meta name="description" content="Block coding-agent writes outside allowed paths on supported Linux and review lasting changes in watched paths." />
+    <title>Agent Write Barrier — Block writes outside a project</title>
+    <link rel="canonical" href="https://agent-write-barrier.sociobot.in/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" as="image" href="/hero-boundary.webp" type="image/webp" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Agent Write Barrier — Block writes outside a project" />
+    <meta property="og:description" content="Run a coding agent with allowed paths, then review lasting changes in watched paths." />
+    <meta property="og:url" content="https://agent-write-barrier.sociobot.in/" />
+    <meta property="og:image" content="https://agent-write-barrier.sociobot.in/og-boundary.webp" />
+    <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Agent Write Barrier — Block writes outside a project" />
+    <meta name="twitter:description" content="Run a coding agent with allowed paths, then review lasting changes in watched paths." />
+    <meta name="twitter:image" content="https://agent-write-barrier.sociobot.in/og-boundary.webp" />
+    <script type="module" crossorigin src="/assets/main-BSD9b5Si.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/style-BRUWxgDj.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div class="offline-bar" id="offline-bar" role="status" hidden>You’re offline. Cached guides and the sample recording remain available.</div>
+    <header class="site-header">
+      <a class="brand" href="/" data-route aria-label="Agent Write Barrier home"><svg aria-hidden="true" viewBox="0 0 32 32"><path d="M4 6v20h24V6H4Zm5 5h14v10H9V11Z"/><path class="brand-cut" d="M21 3h4v8h-4z"/></svg><span>AWB</span><span class="brand-long">Agent Write Barrier</span></a>
+      <nav aria-label="Primary navigation"><a href="/demo/" data-route>Demo</a><a href="/#install">Install</a><a href="/privacy/" data-route>Privacy</a><a class="nav-source" href="https://github.com/B-Divyesh/sf-agent-write-barrier" aria-label="Source on GitHub (external)">Source <span aria-hidden="true">↗</span></a></nav>
+    </header>
+    <div class="route-status sr-only" id="route-status" aria-live="polite"></div>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> Blocks outside project writes on Linux</p>
+          <h1 id="hero-title" tabindex="-1">Block agent writes outside your project</h1>
+          <p class="hero-lede">For developers running local coding agents who need lasting project changes listed for review.</p>
+          <div class="hero-actions"><a class="button primary" href="/demo/" data-route>Try it with sample data <span aria-hidden="true">→</span></a><a class="button secondary" href="#install">Install AWB</a></div>
+          <p class="action-note">Opens a completed sample run with a blocked write and receipt.</p>
+          <dl class="proof-strip" aria-label="Product facts"><div><dt>Local</dt><dd>The CLI runs locally</dd></div><div><dt>Free</dt><dd>MIT licensed</dd></div><div><dt>Offline</dt><dd>Cached guide works</dd></div></dl>
+        </div>
+        <figure class="hero-visual"><div class="boundary-label label-in"><span aria-hidden="true">●</span> allowed paths</div><div class="boundary-label label-out"><span aria-hidden="true">⊘</span> write blocked</div><img src="/hero-boundary.webp" width="1200" height="800" fetchpriority="high" alt="A green project plane with an amber write path stopping at its edge." /><figcaption>Allowed paths glow. The outside write stops.</figcaption></figure>
+      </section>
+
+      <section class="demo-preview" aria-labelledby="preview-title">
+        <div><p class="section-index">01 / SAMPLE RUN</p><h2 id="preview-title">See the blocked write and receipt</h2><p>The bundled demo uses a temporary sample project. It leaves your current project unchanged.</p><a class="button secondary" href="/demo/" data-route>Open the sample run</a></div>
+        <div class="terminal compact" aria-label="Excerpt from the bundled AWB demo"><div class="terminal-top"><span><i></i><i></i><i></i></span><code>awb demo</code><span class="terminal-mode">ENFORCED</span></div><pre class="recording" tabindex="0" aria-label="AWB demo output excerpt"><code>$ awb demo
+BLOCKED  ../blocked-agent.conf
+CREATED  target/config.pyc
+MODIFIED src/config.rs
+DELETED  obsolete.txt
+RECEIPT  write-receipt.json</code></pre></div>
+      </section>
+
+      <section class="problem-section" aria-labelledby="changes-title"><p class="section-index">02 / RECEIPT COVERAGE</p><div class="section-heading"><h2 id="changes-title">List lasting changes Git can miss</h2><p>AWB compares watched paths before and after a run. The receipt includes ignored files and Git metadata.</p></div><div class="diff-window" aria-label="Git diff and AWB receipt comparison"><div class="window-bar"><span></span><span></span><span></span><code>watched_paths</code></div><div class="compare-head"><span>git diff</span><span>AWB receipt</span></div><div class="compare-row"><code>src/auth.ts</code><span class="git-sees">modified</span><span class="awb-sees">modified</span></div><div class="compare-row"><code>target/cache.pyc</code><span class="git-misses">ignored</span><span class="awb-sees">created</span></div><div class="compare-row"><code>.git/hooks/pre-commit</code><span class="git-misses">not listed</span><span class="awb-sees">modified</span></div></div></section>
+
+      <section class="workflow" id="how" aria-labelledby="how-title"><p class="section-index">03 / HOW IT WORKS</p><div class="section-heading"><h2 id="how-title">Block outside writes. Record inside changes.</h2><p>Landlock applies the write boundary. Snapshots compare lasting changes only in watched paths.</p></div><ol class="steps"><li><span class="step-num">01</span><div><h3>Choose paths</h3><p>Set allowed paths for writes and watched paths for the receipt.</p></div><code>"allow_write": ["."]</code></li><li><span class="step-num">02</span><div><h3>Run the agent</h3><p>Put the local agent command after <code>--</code>. Child processes inherit the boundary.</p></div><code>awb run -- claude</code></li><li><span class="step-num">03</span><div><h3>Review the receipt</h3><p>Inspect created, modified, and deleted paths with content and metadata hashes.</p></div><code>awb inspect .awb/…</code></li></ol></section>
+
+      <section class="install-section" id="install" aria-labelledby="install-title"><div><p class="section-index">04 / INSTALL</p><h2 id="install-title">Install and run AWB</h2><p>Build the MIT-licensed CLI from its source repository.</p><div class="compat"><span class="status-dot" aria-hidden="true"></span><strong>Enforced:</strong> Landlock ABI 3 or newer</div></div><div class="install-code"><pre tabindex="0" aria-label="Cargo install command"><code id="install-command">cargo install --git https://github.com/B-Divyesh/sf-agent-write-barrier</code></pre><button class="copy-button" type="button" data-copy="install-command">Copy install command</button><pre tabindex="0" aria-label="AWB setup commands"><code>cd your-project
+awb init
+awb check
+awb run -- claude</code></pre><a class="roomy-link" href="https://github.com/B-Divyesh/sf-agent-write-barrier#security-model-and-limits" aria-label="Read the security model on GitHub (external)">Read the security model <span aria-hidden="true">↗</span></a></div></section>
+
+      <section class="limits" aria-labelledby="limits-title"><p class="section-index">05 / LIMITS AND PRIVACY</p><h2 id="limits-title">Know what the boundary covers</h2><ul><li><span aria-hidden="true">✓</span><div><strong>Supported Linux</strong><p>The 15-case test blocks writes outside allowed paths under Landlock.</p></div></li><li><span aria-hidden="true">×</span><div><strong>Not a full sandbox</strong><p>AWB does not isolate networks, processes, devices, open file descriptors, or kernel flaws.</p></div></li><li><span aria-hidden="true">!</span><div><strong>Visible fallback</strong><p>AWB fails closed without enforcement. Explicit audit mode labels receipts and cannot block writes.</p></div></li></ul><p class="privacy-note">The CLI has no telemetry. The site uses no analytics or third-party runtime files. <a href="/privacy/" data-route>Read the privacy details</a>.</p></section>
+    </main>
+
+    <footer><a class="brand footer-brand" href="/" data-route aria-label="Agent Write Barrier home"><svg aria-hidden="true" viewBox="0 0 32 32"><path d="M4 6v20h24V6H4Zm5 5h14v10H9V11Z"/></svg><span>AWB</span></a><p>Block outside writes. Review lasting changes.</p><nav aria-label="Legal and project links"><a href="/privacy/" data-route>Privacy</a><a href="/terms/" data-route>Terms</a><a href="https://github.com/B-Divyesh/sf-agent-write-barrier" aria-label="GitHub repository (external)">GitHub <span aria-hidden="true">↗</span></a></nav><small>Built by Param Factory · v0.1.0 · polish 1</small></footer>
+  </body>
+</html>

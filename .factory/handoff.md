@@ -54,7 +54,7 @@ Deployment used the work order configuration:
 /opt/fleet/lib/deploy-static.sh agent-write-barrier dist/site
 ```
 
-Azure deployment id: `d458b4e9-3e60-41a6-8047-caa0031d44c0`.
+Final Azure deployment id: `8a2bfd4c-57d3-44dd-b999-bccbd7301767`.
 
 Post-deploy checks:
 
