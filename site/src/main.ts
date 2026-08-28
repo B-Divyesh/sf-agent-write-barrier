@@ -93,5 +93,5 @@ window.addEventListener('offline', updateConnection);
 updateConnection();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }));
 }
